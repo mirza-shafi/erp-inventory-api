@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 
 from app.core.config import settings
@@ -23,11 +25,25 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# CORS middleware for frontend communication
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify the actual origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"Global error: {str(exc)}")
     return JSONResponse(
+
+import os
+# Mount frontend dashboard (Ensure the frontend folder exists)
+os.makedirs("frontend", exist_ok=True)
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
         status_code=500,
         content={"message": "An unexpected error occurred. Please try again later."},
     )
