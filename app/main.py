@@ -43,13 +43,13 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={"message": "An unexpected error occurred. Please try again later."},
     )
 
-import os
-# Mount frontend dashboard (Ensure the frontend folder exists)
-os.makedirs("frontend", exist_ok=True)
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
-
 app.include_router(product_router, prefix="/api/v1/products", tags=["Products"])
 
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+import os
+# Mount frontend dashboard (Ensure the frontend folder exists)
+os.makedirs("frontend", exist_ok=True)
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
