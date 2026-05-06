@@ -9,7 +9,7 @@ ENV PYTHONUNBUFFERED 1
 
 # Install required system dependencies (for building asyncpg/psycopg etc.)
 RUN apt-get update \
-    && apt-get install -y gcc libpq-dev \
+    && apt-get install -y build-essential libpq-dev python3-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install python dependencies
