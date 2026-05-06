@@ -160,6 +160,9 @@
                             </select>
                         </div>
                         <div class="flex gap-3">
+                            <button @click="fetchProducts" class="glass-panel px-4 py-2.5 rounded-lg text-gray-300 hover:text-white hover:border-gray-500 transition-colors flex items-center space-x-2" title="Force Sync with Mainframe">
+                                <i class="fa-solid fa-arrows-rotate" :class="{'fa-spin': loading}"></i><span>Sync</span>
+                            </button>
                             <button @click="exportCSV" class="glass-panel px-4 py-2.5 rounded-lg text-gray-300 hover:text-white hover:border-gray-500 transition-colors flex items-center space-x-2">
                                 <i class="fa-solid fa-download"></i><span>Export</span>
                             </button>

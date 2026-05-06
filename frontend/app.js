@@ -266,7 +266,7 @@ createApp({
             searchQuery, selectedCategory, categories, 
             sortKey, sortAsc, toggleSort,
             showModal, isEditing, form, openModal, closeModal, saveProduct, confirmDelete, adjustStock,
-            toasts, totalProducts, totalValue, totalCost, lowStockCount, exportCSV
+            toasts, totalProducts, totalValue, totalCost, lowStockCount, exportCSV, fetchProducts
         };
     }
 }).mount('#app');
