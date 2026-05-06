@@ -1,409 +1,317 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP Inventory Dashboard | Enterprise Edition</title>
+    <title>QuantumERP - Inventory</title>
+    <!-- Vue 3 -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Vue 3 -->
-    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        dark: { 800: '#1e1e2d', 900: '#171723' },
+                        primary: '#3b82f6',
+                        accent: '#8b5cf6'
+                    }
+                }
+            }
+        }
+    </script>
     <!-- Axios -->
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        [v-cloak] { display: none; }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.3s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; transform: translateY(-10px); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        body { background-color: #171723; color: #e2e8f0; font-family: 'Inter', system-ui, sans-serif; }
+        .glass-panel { background: rgba(30, 30, 45, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-hidden">
-    <div id="app" v-cloak class="flex h-screen w-full">
-        
+<body class="h-screen flex overflow-hidden">
+    <div id="app" class="w-full flex h-full">
+
         <!-- Sidebar -->
-        <aside class="w-64 bg-[#0f172a] text-white flex flex-col hidden md:flex shadow-2xl relative z-20">
-            <div class="h-16 flex items-center px-6 border-b border-slate-800 bg-[#0b1120]">
-                <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center mr-3 shadow-lg">
-                    <i class="fa-solid fa-layer-group text-sm"></i>
+        <aside class="w-64 glass-panel h-full flex flex-col transition-all duration-300 z-20 shadow-2xl">
+            <div class="h-16 flex items-center px-6 border-b border-gray-700/50">
+                <div class="w-8 h-8 rounded bg-gradient-to-tr from-primary to-accent flex items-center justify-center mr-3 shadow-lg shadow-primary/30">
+                    <i class="fa-solid fa-cube text-white"></i>
                 </div>
-                <span class="text-xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-indigo-100">QuantumERP</span>
+                <span class="text-lg font-bold tracking-wider text-white">Quantum<span class="text-primary">ERP</span></span>
             </div>
-            
-            <div class="px-4 py-4 text-xs font-semibold text-slate-500 tracking-wider uppercase">Menu</div>
-            <nav class="flex-1 px-3 space-y-1 custom-scrollbar overflow-y-auto">
-                <a href="#" @click.prevent="switchView('dashboard')" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200" :class="currentView === 'dashboard' ? 'bg-indigo-600/10 text-indigo-400' : 'text-slate-300 hover:bg-slate-800 hover:text-white'">
-                    <i class="fa-solid fa-chart-pie w-6 transition-transform group-hover:scale-110" :class="currentView === 'dashboard' ? 'text-indigo-400' : 'text-slate-400'"></i> Dashboard
-                </a>
-                <a href="#" @click.prevent="switchView('inventory')" class="group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200" :class="currentView === 'inventory' ? 'bg-indigo-600/10 text-indigo-400' : 'text-slate-300 hover:bg-slate-800 hover:text-white'">
-                    <i class="fa-solid fa-boxes-stacked w-6 transition-transform group-hover:scale-110" :class="currentView === 'inventory' ? 'text-indigo-400' : 'text-slate-400'"></i> Inventory
-                    <span v-if="lowStockCount > 0" class="ml-auto bg-rose-500 text-white py-0.5 px-2 rounded-full text-xs font-bold">{{ lowStockCount }}</span>
-                </a>
+            <nav class="flex-1 px-4 py-6 space-y-2">
+                <button @click="currentView = 'dashboard'" :class="['w-full flex items-center px-4 py-3 rounded-lg transition-colors', currentView === 'dashboard' ? 'bg-primary/20 text-primary border border-primary/30' : 'text-gray-400 hover:bg-white/5 hover:text-white']">
+                    <i class="fa-solid fa-chart-pie w-6"></i>
+                    <span class="font-medium">Command Center</span>
+                </button>
+                <button @click="currentView = 'inventory'" :class="['w-full flex items-center px-4 py-3 rounded-lg transition-colors', currentView === 'inventory' ? 'bg-primary/20 text-primary border border-primary/30' : 'text-gray-400 hover:bg-white/5 hover:text-white']">
+                    <i class="fa-solid fa-boxes-stacked w-6"></i>
+                    <span class="font-medium">Stock Matrix</span>
+                </button>
             </nav>
-            
-            <!-- User Profile Snippet-->
-            <div class="p-4 border-t border-slate-800 bg-[#0b1120] flex items-center">
-                <div class="h-9 w-9 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-300">
-                    AD
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm font-medium text-white">Admin User</p>
-                    <p class="text-xs text-green-400 flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-green-400 mr-1.5"></span>Online</p>
-                </div>
-            </div>
         </aside>
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col min-w-0 overflow-hidden relative">
+        <main class="flex-1 flex flex-col h-full bg-[#12121c] relative overflow-hidden">
             <!-- Header -->
-            <header class="h-16 bg-white/80 backdrop-blur-md border-b border-slate-200 flex flex-shrink-0 items-center justify-between px-6 lg:px-10 z-10 sticky top-0">
-                <div class="flex items-center text-xl font-bold text-slate-800 tracking-tight">
-                    <span v-if="currentView === 'dashboard'">Analytics Overview</span>
-                    <span v-if="currentView === 'inventory'">Inventory Database</span>
-                </div>
-                <div class="flex items-center space-x-5">
-                    <!-- Refresh Button -->
-                    <button @click="fetchProducts" class="text-slate-400 hover:text-indigo-600 transition-colors" title="Sync Data">
-                        <i class="fa-solid fa-rotate" :class="{'fa-spin': loading}"></i>
+            <header class="h-16 glass-panel border-b border-gray-700/50 flex items-center justify-between px-8 z-10">
+                <h1 class="text-xl font-semibold text-white tracking-wide">
+                    {{ currentView === 'dashboard' ? 'Inventory Overview' : 'Asset Management' }}
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <button class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
+                        <i class="fa-solid fa-bell"></i>
                     </button>
-                    <!-- Notifications -->
-                    <div class="relative">
-                        <button class="flex items-center text-slate-400 hover:text-slate-600 transition-colors">
-                            <i class="fa-solid fa-bell text-lg"></i>
-                            <span v-if="lowStockCount > 0" class="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white border-2 border-white shadow-sm">{{ lowStockCount }}</span>
-                        </button>
-                    </div>
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 border border-gray-500"></div>
                 </div>
             </header>
 
-            <!-- Main Scrollable Area -->
-            <main class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/50 p-6 lg:p-10">
+            <!-- Scrollable Body -->
+            <div class="flex-1 overflow-y-auto p-8 scrollbar-hide">
                 
-                <!-- DASHBOARD VIEW -->
-                <transition name="fade" mode="out-in">
-                    <div v-if="currentView === 'dashboard'" class="space-y-8 max-w-7xl mx-auto">
-                        
-                        <!-- Top KPI Cards -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-                            <!-- Card 1 -->
-                            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
-                                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-300">
-                                    <i class="fa-solid fa-boxes-packing text-6xl text-indigo-600"></i>
-                                </div>
-                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Items</p>
-                                <h3 class="text-3xl font-bold text-slate-800">{{ stats.totalItems }}</h3>
-                                <p class="text-sm mt-3 font-medium text-emerald-500 flex items-center">
-                                    <i class="fa-solid fa-arrow-trend-up mr-1"></i> System Active
-                                </p>
-                            </div>
-                            
-                            <!-- Card 2 -->
-                            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
-                                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-300">
-                                    <i class="fa-solid fa-sack-dollar text-6xl text-emerald-600"></i>
-                                </div>
-                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Total Asset Value</p>
-                                <h3 class="text-3xl font-bold text-slate-800">${{ stats.totalValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) }}</h3>
-                                <p class="text-sm mt-3 font-medium text-emerald-500 flex items-center">
-                                    <i class="fa-solid fa-calculator mr-1"></i> Capital Liquidity
-                                </p>
-                            </div>
+                <!-- Loading State -->
+                <div v-if="loading" class="flex flex-col items-center justify-center h-64">
+                    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mb-4"></div>
+                    <span class="text-gray-400 animate-pulse">Synchronizing with Mainframe...</span>
+                </div>
 
-                            <!-- Card 3 -->
-                            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm relative overflow-hidden group">
-                                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition-transform duration-300">
-                                    <i class="fa-solid fa-tags text-6xl text-blue-600"></i>
-                                </div>
-                                <p class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Categories</p>
-                                <h3 class="text-3xl font-bold text-slate-800">{{ categories.length }}</h3>
-                                <p class="text-sm mt-3 font-medium text-blue-500 flex items-center">
-                                    <i class="fa-solid fa-cubes mr-1"></i> Diverse Stock
-                                </p>
-                            </div>
+                <!-- Dashboard View -->
+                <div v-else-if="currentView === 'dashboard'" class="space-y-6">
+                    <!-- KPI Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                        <div class="glass-panel p-6 rounded-xl border border-gray-700/50">
+                            <p class="text-sm font-medium text-gray-400 mb-1">Total Active SKUs</p>
+                            <h3 class="text-3xl font-bold text-white">{{ totalProducts }}</h3>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border border-gray-700/50">
+                            <p class="text-sm font-medium text-gray-400 mb-1">Total Inventory Value</p>
+                            <h3 class="text-3xl font-bold text-emerald-400">${{ totalValue.toFixed(2) }}</h3>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border border-gray-700/50">
+                            <p class="text-sm font-medium text-gray-400 mb-1">Capital Invested (Cost)</p>
+                            <h3 class="text-3xl font-bold text-blue-400">${{ totalCost.toFixed(2) }}</h3>
+                        </div>
+                        <div class="glass-panel p-6 rounded-xl border border-gray-700/50 relative overflow-hidden">
+                            <div v-if="lowStockCount > 0" class="absolute top-0 right-0 w-16 h-16 bg-red-500/20 blur-xl rounded-full"></div>
+                            <p class="text-sm font-medium text-gray-400 mb-1">Critical Low Stock</p>
+                            <h3 :class="['text-3xl font-bold', lowStockCount > 0 ? 'text-red-400' : 'text-gray-300']">{{ lowStockCount }} Alerts</h3>
+                        </div>
+                    </div>
 
-                            <!-- Card 4 -->
-                            <div class="bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl p-6 shadow-md shadow-red-500/20 relative overflow-hidden group text-white">
-                                <div class="absolute top-0 right-0 p-4 opacity-20 group-hover:scale-110 transition-transform duration-300">
-                                    <i class="fa-solid fa-triangle-exclamation text-6xl"></i>
-                                </div>
-                                <p class="text-sm font-semibold text-red-100 uppercase tracking-wider mb-2">Critical Alerts</p>
-                                <h3 class="text-3xl font-bold text-white">{{ lowStockCount }}</h3>
-                                <p class="text-sm mt-3 font-medium text-red-100 flex items-center">
-                                    <i class="fa-solid fa-bell mr-1"></i> Requires Action
-                                </p>
+                    <!-- Charts & Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-1 glass-panel p-6 rounded-xl border border-gray-700/50">
+                            <h3 class="text-lg font-medium text-white mb-6">Stock by Category</h3>
+                            <div class="h-64 relative">
+                                <canvas id="inventoryChart"></canvas>
                             </div>
                         </div>
-
-                        <!-- Mid Section: Charts and Alerts -->
-                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            
-                            <!-- Graph section -->
-                            <div class="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm lg:col-span-2 flex flex-col">
-                                <h3 class="text-lg font-bold text-slate-800 mb-6 border-b pb-4">Category Distribution</h3>
-                                <div class="flex-1 relative min-h-[300px] flex items-center justify-center">
-                                    <canvas id="inventoryChart"></canvas>
-                                    <div v-if="products.length === 0" class="absolute inset-0 flex items-center justify-center bg-white/80">
-                                        <p class="text-slate-500">No data available for chart</p>
-                                    </div>
-                                </div>
+                        <div class="lg:col-span-2 glass-panel p-6 rounded-xl border border-gray-700/50 flex flex-col">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-medium text-white">Critical Action Required</h3>
+                                <button @click="currentView = 'inventory'" class="text-sm text-primary hover:underline">View All &rarr;</button>
                             </div>
-
-                            <!-- Actionable Alerts List -->
-                            <div class="bg-white rounded-2xl border border-slate-100 shadow-sm flex flex-col h-[400px]">
-                                <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-rose-50 rounded-t-2xl">
-                                    <h3 class="text-sm font-bold text-rose-700 uppercase tracking-wide"><i class="fa-solid fa-bolt mr-2"></i> Depleted Stock</h3>
-                                    <span class="bg-white text-rose-600 text-xs font-bold px-2 py-1 rounded-md shadow-sm">{{ lowStockCount }} Items</span>
-                                </div>
-                                <div class="flex-1 overflow-y-auto custom-scrollbar p-2">
-                                    <ul v-if="lowStockProducts.length > 0" class="space-y-2">
-                                        <li v-for="item in lowStockProducts" :key="item.id" class="p-3 bg-white hover:bg-slate-50 border border-slate-100 rounded-xl transition-colors flex items-center justify-between group">
-                                            <div class="flex items-center space-x-3 overflow-hidden">
-                                                <div class="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500">
-                                                    <i class="fa-solid fa-cube"></i>
-                                                </div>
-                                                <div class="truncate">
-                                                    <p class="text-sm font-bold text-slate-800 truncate">{{ item.name }}</p>
-                                                    <p class="text-xs text-slate-500 mt-0.5 truncate">{{ item.category || 'Uncategorized' }}</p>
-                                                </div>
-                                            </div>
-                                            <div class="text-right flex-shrink-0 flex flex-col items-end">
-                                                <span class="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md mb-1 border border-rose-100">
-                                                    Qty: {{ item.quantity }}
-                                                </span>
-                                                <button @click="openEditModal(item)" class="text-[10px] uppercase tracking-wide font-bold text-indigo-600 hover:text-indigo-800 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    Restock <i class="fa-solid fa-arrow-right ml-0.5"></i>
-                                                </button>
-                                            </div>
-                                        </li>
-                                    </ul>
-                                    <div v-else class="h-full flex flex-col items-center justify-center text-slate-400 p-6 text-center">
-                                        <div class="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mb-4">
-                                            <i class="fa-solid fa-check text-2xl text-emerald-500"></i>
-                                        </div>
-                                        <p class="font-medium text-slate-600 mb-1">Inventory is Healthy</p>
-                                        <p class="text-xs">No items currently below threshold.</p>
-                                    </div>
-                                </div>
+                            <div class="flex-1 overflow-y-auto">
+                                <table class="w-full text-left text-sm">
+                                    <thead>
+                                        <tr class="text-gray-500 border-b border-gray-700">
+                                            <th class="pb-3 font-medium">SKU / Item</th>
+                                            <th class="pb-3 font-medium">Location</th>
+                                            <th class="pb-3 font-medium text-right">Quantity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="item in products.filter(p => p.quantity < 10).slice(0, 5)" :key="item.id" class="border-b border-gray-700/50">
+                                            <td class="py-3">
+                                                <div class="font-medium text-gray-200">{{ item.sku }}</div>
+                                                <div class="text-xs text-gray-500">{{ item.name }}</div>
+                                            </td>
+                                            <td class="py-3 text-gray-400">{{ item.location || '--' }}</td>
+                                            <td class="py-3 text-right font-medium text-red-400">{{ item.quantity }}</td>
+                                        </tr>
+                                        <tr v-if="lowStockCount === 0">
+                                            <td colspan="3" class="py-8 text-center text-gray-500">All stock levels nominal.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
-                </transition>
+                </div>
 
-                <!-- INVENTORY MANAGEMENT VIEW -->
-                <transition name="fade" mode="out-in">
-                    <div v-if="currentView === 'inventory'" class="bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col min-h-[calc(100vh-8rem)]">
-                        <!-- Toolbar -->
-                        <div class="p-4 lg:p-6 border-b border-slate-200 bg-slate-50/50 rounded-t-2xl flex flex-col md:flex-row justify-between items-center gap-4">
-                            <!-- Filters -->
-                            <div class="flex items-center w-full md:w-auto space-x-3 w-full max-w-2xl hidden-x overflow-x-auto">
-                                <div class="relative flex-1 min-w-[200px]">
-                                    <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400"></i>
-                                    <input type="text" v-model="searchQuery" placeholder="Search records..." class="w-full pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm text-slate-800 shadow-sm transition-all">
-                                </div>
-                                <select v-model="selectedCategory" class="bg-white border border-slate-300 text-slate-700 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 py-2 pr-8 pl-3 shadow-sm min-w-[150px] transition-all">
-                                    <option value="">All Categories</option>
-                                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                                </select>
+                <!-- Inventory View -->
+                <div v-else-if="currentView === 'inventory'" class="flex flex-col h-full space-y-6">
+                    <!-- Toolbar -->
+                    <div class="flex flex-col sm:flex-row justify-between gap-4">
+                        <div class="flex flex-1 gap-4">
+                            <div class="relative w-full max-w-md">
+                                <i class="fa-solid fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                                <input v-model="searchQuery" type="text" placeholder="Search by Name or SKU..." class="w-full bg-dark-900 border border-gray-700 text-white rounded-lg pl-10 pr-4 py-2.5 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary w-full transition-all">
                             </div>
-                            <!-- Buttons -->
-                            <div class="flex items-center w-full md:w-auto space-x-3 shrink-0">
-                                <button @click="exportCSV" class="w-full md:w-auto bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center justify-center group">
-                                    <i class="fa-solid fa-file-export mr-2 text-slate-400 group-hover:text-indigo-500 transition-colors"></i> Export
-                                </button>
-                                <button @click="openCreateModal" class="w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors shadow-sm shadow-indigo-200 flex items-center justify-center">
-                                    <i class="fa-solid fa-plus mr-2"></i> Add Record
-                                </button>
-                            </div>
+                            <select v-model="selectedCategory" class="bg-dark-900 border border-gray-700 text-white rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary">
+                                <option value="">All Categories</option>
+                                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                            </select>
                         </div>
+                        <div class="flex gap-3">
+                            <button @click="exportCSV" class="glass-panel px-4 py-2.5 rounded-lg text-gray-300 hover:text-white hover:border-gray-500 transition-colors flex items-center space-x-2">
+                                <i class="fa-solid fa-download"></i><span>Export</span>
+                            </button>
+                            <button @click="openModal()" class="bg-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition-colors shadow-lg shadow-primary/20 flex items-center space-x-2">
+                                <i class="fa-solid fa-plus"></i><span>Define Asset</span>
+                            </button>
+                        </div>
+                    </div>
 
-                        <!-- Data Table -->
-                        <div class="flex-1 overflow-x-auto custom-scrollbar">
-                            <table class="min-w-full divide-y divide-slate-200">
-                                <thead class="bg-slate-50 sticky top-0 z-10">
+                    <!-- Data Grid -->
+                    <div class="glass-panel rounded-xl border border-gray-700/50 flex-1 flex flex-col overflow-hidden">
+                        <div class="overflow-x-auto flex-1">
+                            <table class="w-full text-left text-sm whitespace-nowrap">
+                                <thead class="bg-dark-900/80 uppercase text-gray-400 text-xs font-semibold sticky top-0 z-10 border-b border-gray-700">
                                     <tr>
-                                        <!-- Sortable Headers -->
-                                        <th @click="toggleSort('name')" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group">
-                                            Product Name <i class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100" :class="{'text-indigo-600 opacity-100': sortKey==='name', 'fa-sort-up': sortKey==='name' && sortAsc, 'fa-sort-down': sortKey==='name' && !sortAsc}"></i>
-                                        </th>
-                                        <th @click="toggleSort('category')" class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group">
-                                            Category <i class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100" :class="{'text-indigo-600 opacity-100': sortKey==='category'}"></i>
-                                        </th>
-                                        <th @click="toggleSort('price')" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group">
-                                            Unit Price <i class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100" :class="{'text-indigo-600 opacity-100': sortKey==='price'}"></i>
-                                        </th>
-                                        <th @click="toggleSort('quantity')" class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group">
-                                            Stock Lvl <i class="fa-solid fa-sort ml-1 opacity-50 group-hover:opacity-100" :class="{'text-indigo-600 opacity-100': sortKey==='quantity'}"></i>
-                                        </th>
-                                        <th class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">Health</th>
-                                        <th class="px-6 py-4 text-right text-xs font-bold text-slate-500 uppercase tracking-wider">Actions</th>
+                                        <th class="px-6 py-4 cursor-pointer hover:text-white" @click="toggleSort('sku')">SKU <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="px-6 py-4 cursor-pointer hover:text-white" @click="toggleSort('name')">Asset Name <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="px-6 py-4">Location</th>
+                                        <th class="px-6 py-4 text-right cursor-pointer hover:text-white" @click="toggleSort('cost_price')">Cost / Selling <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="px-6 py-4 text-center cursor-pointer hover:text-white" @click="toggleSort('quantity')">Stock <i class="fa-solid fa-sort ml-1"></i></th>
+                                        <th class="px-6 py-4 text-center">Status</th>
+                                        <th class="px-6 py-4 text-center">Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody class="bg-white divide-y divide-slate-100">
-                                    <tr v-for="item in sortedFilteredProducts" :key="item.id" class="hover:bg-slate-50/50 transition-colors">
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <div class="flex items-center">
-                                                <div class="w-8 h-8 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-xs uppercase mr-3">
-                                                    {{ item.name.substring(0,2) }}
-                                                </div>
-                                                <div>
-                                                    <div class="text-sm font-bold text-slate-800">{{ item.name }}</div>
-                                                    <div class="text-[10px] text-slate-400 font-mono">ID: {{ item.id.substring(0,8) }}</div>
-                                                </div>
+                                <tbody class="divide-y divide-gray-800">
+                                    <tr v-for="product in filteredProducts" :key="product.id" class="hover:bg-white/[0.02] transition-colors">
+                                        <td class="px-6 py-4 font-mono text-gray-300">{{ product.sku }}</td>
+                                        <td class="px-6 py-4">
+                                            <div class="font-medium text-white">{{ product.name }}</div>
+                                            <div class="text-xs text-gray-500">{{ product.category || 'Uncategorized' }}</div>
+                                        </td>
+                                        <td class="px-6 py-4 text-gray-400">{{ product.location || '--' }}</td>
+                                        <td class="px-6 py-4 text-right">
+                                            <div class="text-gray-400 text-xs">C: ${{ product.cost_price.toFixed(2) }}</div>
+                                            <div class="font-medium text-emerald-400">S: ${{ product.price.toFixed(2) }}</div>
+                                        </td>
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center justify-center space-x-2">
+                                                <button @click="adjustStock(product, -1)" class="w-6 h-6 rounded-full bg-dark-900 border border-gray-600 flex items-center justify-center text-gray-400 hover:text-red-400 hover:border-red-400 transition-colors">-</button>
+                                                <span :class="['font-medium w-8 text-center', product.quantity < 10 ? 'text-red-400' : 'text-gray-200']">{{ product.quantity }}</span>
+                                                <button @click="adjustStock(product, 1)" class="w-6 h-6 rounded-full bg-dark-900 border border-gray-600 flex items-center justify-center text-gray-400 hover:text-emerald-400 hover:border-emerald-400 transition-colors">+</button>
                                             </div>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap">
-                                            <span class="px-2.5 py-1 inline-flex text-[11px] font-bold uppercase tracking-wider rounded border border-slate-200 bg-slate-50 text-slate-600">
-                                                {{ item.category || 'N/A' }}
-                                            </span>
+                                        <td class="px-6 py-4 text-center">
+                                            <span v-if="product.status === 'Active'" class="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-xs border border-emerald-500/20">Active</span>
+                                            <span v-else class="px-2 py-1 rounded bg-red-500/10 text-red-400 text-xs border border-red-500/20">Discontinued</span>
                                         </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right font-mono text-sm text-slate-700 font-medium">
-                                            ${{ item.price.toFixed(2) }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right font-mono text-sm" :class="item.quantity < 5 ? 'text-rose-600 font-bold' : 'text-slate-700'">
-                                            {{ item.quantity }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-center">
-                                            <!-- Visual status bar -->
-                                            <div class="w-full max-w-[80px] mx-auto bg-slate-200 rounded-full h-1.5 mb-1 overflow-hidden flex">
-                                                <div class="h-1.5 rounded-full" 
-                                                     :class="item.quantity > 15 ? 'bg-emerald-500' : (item.quantity > 5 ? 'bg-amber-400' : 'bg-rose-500')"
-                                                     :style="`width: ${Math.min((item.quantity / 30) * 100, 100)}%`">
-                                                </div>
-                                            </div>
-                                            <span class="text-[10px] font-bold uppercase" :class="item.quantity > 15 ? 'text-emerald-600' : (item.quantity > 5 ? 'text-amber-600' : 'text-rose-600')">
-                                                {{ item.quantity > 15 ? 'Optimal' : (item.quantity > 5 ? 'Warning' : 'Critical') }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                            <button @click="openEditModal(item)" class="text-slate-400 hover:text-indigo-600 border border-slate-200 rounded p-1.5 mr-2 transition-colors bg-white shadow-sm" title="Edit">
-                                                <i class="fa-solid fa-pen-to-square w-4"></i>
-                                            </button>
-                                            <button @click="confirmDelete(item)" class="text-slate-400 hover:text-rose-600 border border-slate-200 rounded p-1.5 transition-colors bg-white shadow-sm" title="Delete">
-                                                <i class="fa-solid fa-trash-can w-4"></i>
-                                            </button>
+                                        <td class="px-6 py-4 text-center">
+                                            <button @click="openModal(product)" class="text-blue-400 hover:text-blue-300 mx-2 transition-colors" title="Edit Master Record"><i class="fa-solid fa-pen-to-square"></i></button>
+                                            <button @click="confirmDelete(product)" class="text-red-400 hover:text-red-300 mx-2 transition-colors" title="Purge Record"><i class="fa-solid fa-trash-can"></i></button>
                                         </td>
                                     </tr>
-                                    <tr v-if="sortedFilteredProducts.length === 0">
-                                        <td colspan="6" class="px-6 py-16 text-center border-none">
-                                            <div v-if="loading" class="flex flex-col items-center justify-center text-slate-500">
-                                                <i class="fa-solid fa-circle-notch fa-spin text-3xl text-indigo-500 mb-4"></i>
-                                                <p class="font-medium">Syncing database...</p>
-                                            </div>
-                                            <div v-else class="flex flex-col items-center justify-center text-slate-400">
-                                                <i class="fa-regular fa-folder-open text-5xl mb-4 text-slate-300"></i>
-                                                <p class="font-medium text-slate-600">No records found</p>
-                                                <p class="text-sm mt-1">Try tweaking your search or filters.</p>
-                                            </div>
+                                    <tr v-if="filteredProducts.length === 0">
+                                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                                            <i class="fa-solid fa-microchip text-4xl mb-3 opacity-50"></i>
+                                            <p>No assets found matching the current parameters.</p>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                </transition>
+                </div>
 
-            </main>
-        </div>
+            </div>
+        </main>
 
-        <!-- Product Modal (Create/Edit) via Slide Over or Modal inside -->
-        <transition name="fade">
-            <div v-if="showModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-                <!-- Backdrop -->
-                <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" @click="closeModal" aria-hidden="true"></div>
+        <!-- Asset Form Modal -->
+        <div v-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center" style="display: none;">
+            <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" @click="closeModal"></div>
+            <div class="glass-panel w-full max-w-2xl rounded-2xl shadow-2xl relative z-10 flex flex-col max-h-[90vh] border border-gray-700/50">
+                <div class="px-6 py-4 border-b border-gray-700/50 flex justify-between items-center bg-white/[0.02]">
+                    <h3 class="text-lg font-medium text-white">{{ isEditing ? 'Edit Asset Record' : 'Provision New Asset' }}</h3>
+                    <button @click="closeModal" class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+                </div>
                 
-                <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
-                    <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg border border-slate-100">
-                        <form @submit.prevent="saveProduct">
-                            <div class="bg-white px-6 pb-6 pt-6">
-                                <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
-                                    <h3 class="text-xl font-bold text-slate-800 flex items-center" id="modal-title">
-                                        <div class="w-8 h-8 rounded-full bg-indigo-50 flex items-center justify-center mr-3 text-indigo-600">
-                                            <i class="fa-solid fa-box-open text-sm"></i>
-                                        </div>
-                                        {{ isEditing ? 'Update Record' : 'Create New Record' }}
-                                    </h3>
-                                    <button type="button" @click="closeModal" class="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors">
-                                        <i class="fa-solid fa-xmark text-lg"></i>
-                                    </button>
-                                </div>
-                                
-                                <div class="space-y-5">
-                                    <div>
-                                        <label for="name" class="block text-sm font-bold text-slate-700 uppercase tracking-wide mb-1">Product Name <span class="text-rose-500">*</span></label>
-                                        <input type="text" v-model="form.name" id="name" required class="block w-full border border-slate-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm transition-all" placeholder="Enter full product title">
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-2 gap-5">
-                                        <div>
-                                            <label for="price" class="block text-sm font-bold text-slate-700 uppercase tracking-wide mb-1">Unit Price ($) <span class="text-rose-500">*</span></label>
-                                            <div class="relative">
-                                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500 font-mono">$</span>
-                                                <input type="number" v-model.number="form.price" id="price" step="0.01" min="0" required class="block w-full border border-slate-300 rounded-lg py-2.5 pl-7 pr-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm transition-all" placeholder="0.00">
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label for="quantity" class="block text-sm font-bold text-slate-700 uppercase tracking-wide mb-1">Stock Count <span class="text-rose-500">*</span></label>
-                                            <div class="relative">
-                                                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-500"><i class="fa-solid fa-hashtag text-xs"></i></span>
-                                                <input type="number" v-model.number="form.quantity" id="quantity" min="0" required class="block w-full border border-slate-300 rounded-lg py-2.5 pl-8 pr-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm transition-all" placeholder="0">
-                                            </div>
-                                        </div>
-                                    </div>
+                <form @submit.prevent="saveProduct" class="p-6 overflow-y-auto space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">SKU / Barcode <span class="text-red-500">*</span></label>
+                            <input v-model="form.sku" type="text" required class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Asset Name <span class="text-red-500">*</span></label>
+                            <input v-model="form.name" type="text" required class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white focus:ring-1 focus:ring-primary focus:border-primary outline-none">
+                        </div>
+                        
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Category</label>
+                            <input v-model="form.category" type="text" list="cat-suggestions" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                            <datalist id="cat-suggestions">
+                                <option v-for="cat in categories" :key="cat" :value="cat"></option>
+                            </datalist>
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Status</label>
+                            <select v-model="form.status" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                                <option value="Active">Active</option>
+                                <option value="Discontinued">Discontinued</option>
+                            </select>
+                        </div>
 
-                                    <div>
-                                        <label for="category" class="block text-sm font-bold text-slate-700 uppercase tracking-wide mb-1">Classification grouping</label>
-                                        <input type="text" v-model="form.category" id="category" placeholder="e.g. Hardware, Software, Furnishings" class="block w-full border border-slate-300 rounded-lg py-2.5 px-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm shadow-sm transition-all">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="bg-slate-50 px-6 py-4 flex flex-row-reverse border-t border-slate-100">
-                                <button type="submit" :disabled="saving" class="inline-flex justify-center items-center rounded-lg border border-transparent px-5 py-2 w-auto bg-indigo-600 text-sm font-medium text-white shadow-sm shadow-indigo-200 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all disabled:opacity-70 ml-3">
-                                    <i v-if="saving" class="fa-solid fa-circle-notch fa-spin mr-2"></i>
-                                    <i v-else class="fa-solid fa-floppy-disk mr-2"></i> {{ saving ? 'Processing...' : 'Commit Save' }}
-                                </button>
-                                <button type="button" @click="closeModal" class="mt-3 w-full inline-flex justify-center rounded-lg border border-slate-300 px-5 py-2 bg-white text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:w-auto transition-all">
-                                    Cancel
-                                </button>
-                            </div>
-                        </form>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Cost Price ($)</label>
+                            <input v-model="form.cost_price" type="number" step="0.01" min="0" required class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Selling Price ($) <span class="text-red-500">*</span></label>
+                            <input v-model="form.price" type="number" step="0.01" min="0" required class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Initial Stock</label>
+                            <input v-model="form.quantity" type="number" min="0" required class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Warehouse Location / Bin</label>
+                            <input v-model="form.location" type="text" placeholder="e.g. Aisle 4, Bin B" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Supplier / Vendor</label>
+                            <input v-model="form.supplier" type="text" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none">
+                        </div>
+
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-gray-400 mb-1">Description / Notes</label>
+                            <textarea v-model="form.description" rows="2" class="w-full bg-dark-900 border border-gray-700 rounded-lg px-4 py-2.5 text-white outline-none"></textarea>
+                        </div>
                     </div>
+                </form>
+                
+                <div class="px-6 py-4 border-t border-gray-700/50 flex justify-end space-x-3 bg-white/[0.02]">
+                    <button @click="closeModal" type="button" class="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/5 transition-colors">Cancel</button>
+                    <button @click="saveProduct" type="button" :disabled="saving" class="bg-primary hover:bg-blue-600 disabled:opacity-50 text-white px-6 py-2 rounded-lg font-medium transition-colors shadow-lg shadow-primary/20 flex items-center">
+                        <i v-if="saving" class="fa-solid fa-spinner fa-spin mr-2"></i>
+                        {{ saving ? 'Saving...' : 'Commit to Database' }}
+                    </button>
                 </div>
             </div>
-        </transition>
+        </div>
 
-        <!-- Toasts Notification Area -->
-        <div class="fixed bottom-6 right-6 z-50 flex flex-col space-y-3 pointer-events-none">
-            <transition-group name="fade">
-                <div v-for="toast in toasts" :key="toast.id" 
-                     class="max-w-sm w-full bg-white shadow-xl rounded-xl pointer-events-auto flex items-stretch overflow-hidden border border-slate-100"
-                     :class="toast.type === 'success' ? 'border-b-4 border-b-emerald-500' : 'border-b-4 border-b-rose-500'">
-                    <div class="w-2" :class="toast.type === 'success' ? 'bg-emerald-500' : 'bg-rose-500'"></div>
-                    <div class="flex-1 p-4 flex items-center">
-                        <div class="flex-shrink-0 mr-3">
-                            <i v-if="toast.type === 'success'" class="fa-solid fa-circle-check text-emerald-500 text-xl"></i>
-                            <i v-else class="fa-solid fa-circle-exclamation text-rose-500 text-xl"></i>
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-sm font-bold text-slate-800">{{ toast.type === 'success' ? 'Success' : 'Error' }}</p>
-                            <p class="text-xs font-medium text-slate-500 mt-0.5">{{ toast.message }}</p>
-                        </div>
-                        <button @click="removeToast(toast.id)" class="ml-4 flex-shrink-0 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors rounded p-1">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
-            </transition-group>
+        <!-- Toast Notifications -->
+        <div class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2">
+            <div v-for="toast in toasts" :key="toast.id" 
+                 class="px-4 py-3 rounded-lg shadow-xl text-sm font-medium flex items-center text-white border"
+                 :class="toast.type === 'error' ? 'bg-red-500/20 border-red-500/50' : 'bg-emerald-500/20 border-emerald-500/50'">
+                <i :class="['fa-solid mr-3', toast.type === 'error' ? 'fa-circle-xmark text-red-400' : 'fa-circle-check text-emerald-400']"></i>
+                {{ toast.message }}
+            </div>
         </div>
 
     </div>
-
-    <!-- App Logic -->
-    <script src="app.js"></script>
 </body>
 </html>
