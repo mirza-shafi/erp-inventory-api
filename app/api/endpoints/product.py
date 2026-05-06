@@ -9,11 +9,13 @@ from app.services.product_service import ProductService
 
 router = APIRouter()
 
-@router.post("/", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ProductOut, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=ProductOut, status_code=status.HTTP_201_CREATED, include_in_schema=False)
 async def create_product(product: ProductCreate, db: AsyncSession = Depends(get_db)):
     return await ProductService.create_product(db, product)
 
-@router.get("/", response_model=List[ProductOut])
+@router.get("", response_model=List[ProductOut])
+@router.get("/", response_model=List[ProductOut], include_in_schema=False)
 async def get_products(category: str = Query(None, description="Filter by category"), db: AsyncSession = Depends(get_db)):
     return await ProductService.get_products(db, category)
 
