@@ -1,5 +1,7 @@
 # QuantumERP - Inventory Management API
 
+**🟢 Live Demo:** [https://erp-inventory-api-production.up.railway.app/](https://erp-inventory-api-production.up.railway.app/)
+
 An enterprise-grade, production-ready Inventory Management API and Dashboard built for high performance and clean architecture.
 
 ## 🚀 Features
@@ -82,6 +84,11 @@ erp-inventory-api/
 
 ## 🌐 Usage
 
+### Live Production
+- **Dashboard UI:** [https://erp-inventory-api-production.up.railway.app/](https://erp-inventory-api-production.up.railway.app/)
+- **Swagger API Docs:** [https://erp-inventory-api-production.up.railway.app/docs](https://erp-inventory-api-production.up.railway.app/docs)
+
+### Local Development
 - **Dashboard UI:** Navigate to `http://localhost:8000/` in your browser.
 - **Swagger API Docs:** Navigate to `http://localhost:8000/docs`.
 - **ReDoc API Docs:** Navigate to `http://localhost:8000/redoc`.
